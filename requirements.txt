@@ -1,0 +1,13 @@
+llama-index-core>=0.11,<0.15
+llama-index-llms-openai>=0.2,<0.3
+llama-index-embeddings-huggingface>=0.3,<0.4
+llama-index-embeddings-openai>=0.2,<0.3
+llama-index-vector-stores-faiss>=0.2,<0.7
+faiss-cpu>=1.8,<2
+sentence-transformers>=2.7,<3
+transformers>=4.41,<4.42
+tokenizers>=0.19,<0.20
+huggingface-hub>=0.23,<1
+python-dotenv>=1.0,<2
+pydantic>=2.8,<3
+PyYAML>=6.0,<7

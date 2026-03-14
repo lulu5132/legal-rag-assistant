@@ -1,0 +1,31 @@
+project:
+  name: legal-rag-assistant
+
+paths:
+  docs_dir: data/processed
+  index_dir: indexes/faiss
+
+retrieval:
+  similarity_top_k: 5
+  keyword_top_k: 8
+  semantic_top_k: 8
+  final_top_k: 4
+
+model:
+  # openai or deepseek or ollama
+  provider: ollama
+  llm_model: deepseek-r1:8b
+  temperature: 0.1
+
+  # local or openai
+  embedding_type: local
+  embedding_model: models/bge-small-zh-v1.5
+  embedding_dim: 384
+
+  # For openai: https://api.openai.com/v1
+  # For deepseek: https://api.deepseek.com/v1
+  # For ollama: http://localhost:11434/v1
+  api_base: http://localhost:11434/v1
+
+output:
+  use_json_schema: true

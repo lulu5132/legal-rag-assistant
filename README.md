@@ -1,0 +1,159 @@
+# Legal RAG Assistant
+
+面向法律/专利场景的最小可运行 RAG 实验框架（LlamaIndex + FAISS）。
+
+## 已实现内容
+
+- 本地文档读取与向量化索引
+- FAISS 本地持久化索引
+- 混合检索（语义 + 关键词）
+- Embedding 相似度 rerank
+- JSON Schema 结构化输出
+- 问答检索与来源片段预览
+- 双模型 API 架构预留（OpenAI / DeepSeek）
+- Embedding 双模式（本地 / OpenAI）
+- Ollama 本地模型支持（默认启用）
+
+## 目录结构
+
+- `src/` 核心代码
+- `data/raw/` 原始法律/专利文档
+- `data/processed/` 清洗与切分后数据（当前索引默认读取这里）
+- `indexes/faiss/` 向量索引
+- `prompts/` 提示词模板
+- `evaluation/datasets/` 评测数据集
+- `evaluation/results/` 评测结果
+- `config/` 配置文件
+- `notebooks/` 实验笔记
+- `scripts/` 实用脚本
+- `logs/` 运行日志
+- `docs/` 项目文档
+- `tests/` 测试代码
+
+## 快速开始
+
+1. 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+2. 配置环境变量
+
+```bash
+cp .env.example .env
+```
+
+编辑 `.env`，按使用模式填写：
+
+- `OPENAI_API_KEY=...`
+- `DEEPSEEK_API_KEY=...`
+- `OLLAMA_API_KEY=ollama`
+
+3. 准备文档
+
+将待检索文档放入：
+
+- `data/processed/`
+
+4. 首次构建索引并提问
+
+```bash
+PYTHONPATH=. python scripts/run_pipeline.py --config config/settings.example.yaml --rebuild --query "请总结该专利草案的核心创新点"
+```
+
+后续查询无需重建索引（去掉 `--rebuild`）。
+
+## 模型切换
+
+在 `config/settings.example.yaml` 修改：
+
+- `model.provider`: `openai`、`deepseek` 或 `ollama`
+- `model.llm_model`: 例如 `gpt-4o-mini`、`deepseek-chat` 或 `deepseek-r1:8b`
+- `model.api_base`: OpenAI 用 `https://api.openai.com/v1`；DeepSeek 用 `https://api.deepseek.com/v1`；Ollama 用 `http://localhost:11434/v1`
+
+当前默认配置为本地 Ollama：
+
+- `provider: ollama`
+- `llm_model: deepseek-r1:8b`
+- `api_base: http://localhost:11434/v1`
+
+运行时脚本会打印当前使用的 provider、model 和 api_base。只要看到 `provider: ollama`，就表示使用本地模型，不会调用 DeepSeek 云 API，也不会产生云端 API 费用。
+
+## Ollama 本地部署
+
+安装 Ollama 后，启动服务：
+
+```bash
+ollama serve
+```
+
+下载模型：
+
+```bash
+ollama pull deepseek-r1:8b
+```
+
+验证模型是否存在：
+
+```bash
+curl -s http://127.0.0.1:11434/api/tags
+```
+
+如果输出里能看到 `deepseek-r1:8b`，说明本地模型已准备完成。
+
+## 发布到 GitHub
+
+当前仓库建议不要上传以下内容：
+
+- `.env`
+- 本地模型目录 `models/`
+- 索引目录 `indexes/`
+- 日志目录 `logs/`
+- 真实业务文档 `data/raw/` 和 `data/processed/`
+
+这些内容已经写入 `.gitignore`。
+
+## 什么是“本地 Embedding”
+
+本地 Embedding 指的是：向量化模型在你自己的机器上运行，不把原文传给第三方 API。
+
+当前默认配置：
+
+- `embedding_type: local`
+- `embedding_model: models/bge-small-zh-v1.5`
+
+优点：
+
+- 更好数据隐私（法律场景很重要）
+- 降低长期 API 成本
+
+代价：
+
+- 首次会下载模型
+- CPU 速度通常慢于云端高性能服务
+
+## 本地 Embedding 部署（你当前环境）
+
+由于你环境里的 PyTorch 是 2.1.2，建议保持现有 Torch，不要强制重装。按下面执行：
+
+```bash
+pip install -r requirements.txt
+```
+
+然后通过镜像下载到项目本地目录（首次会较慢）：
+
+```bash
+HF_ENDPOINT=https://hf-mirror.com python -c "from huggingface_hub import snapshot_download; snapshot_download('BAAI/bge-small-zh-v1.5', local_dir='models/bge-small-zh-v1.5')"
+```
+
+下载后 `config/settings.example.yaml` 默认已经指向本地目录：
+
+- `embedding_model: models/bge-small-zh-v1.5`
+
+## 报错说明（你遇到的 NameError: nn）
+
+这是 `sentence-transformers/transformers` 与当前环境版本组合不兼容导致。当前仓库已通过两种方式修复：
+
+- 依赖版本锁定为兼容组合
+- Embedding 改为按需导入，避免未启用本地 embedding 时也触发该错误
