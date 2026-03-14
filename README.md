@@ -10,9 +10,22 @@
 - Embedding 相似度 rerank
 - JSON Schema 结构化输出
 - 问答检索与来源片段预览
-- 双模型 API 架构预留（OpenAI / DeepSeek）
-- Embedding 双模式（本地 / OpenAI）
+- DeepSeek API 与 Ollama 本地双模式
+- Embedding 双模式（本地 / API）
 - Ollama 本地模型支持（默认启用）
+
+## 依赖说明
+
+项目已包含 `requirements.txt`，建议直接安装：
+
+```bash
+pip install -r requirements.txt
+```
+
+说明：
+
+- 该文件使用了兼容区间版本，避免环境里无关包被 `pip freeze` 一并写入。
+- 如需生成“实验快照版”依赖，可另存为 `requirements.lock.txt`，不要覆盖当前 `requirements.txt`。
 
 ## 目录结构
 
@@ -46,7 +59,6 @@ cp .env.example .env
 
 编辑 `.env`，按使用模式填写：
 
-- `OPENAI_API_KEY=...`
 - `DEEPSEEK_API_KEY=...`
 - `OLLAMA_API_KEY=ollama`
 
@@ -68,9 +80,9 @@ PYTHONPATH=. python scripts/run_pipeline.py --config config/settings.example.yam
 
 在 `config/settings.example.yaml` 修改：
 
-- `model.provider`: `openai`、`deepseek` 或 `ollama`
-- `model.llm_model`: 例如 `gpt-4o-mini`、`deepseek-chat` 或 `deepseek-r1:8b`
-- `model.api_base`: OpenAI 用 `https://api.openai.com/v1`；DeepSeek 用 `https://api.deepseek.com/v1`；Ollama 用 `http://localhost:11434/v1`
+- `model.provider`: `deepseek` 或 `ollama`
+- `model.llm_model`: 例如 `deepseek-chat` 或 `deepseek-r1:8b`
+- `model.api_base`: DeepSeek 用 `https://api.deepseek.com/v1`；Ollama 用 `http://localhost:11434/v1`
 
 当前默认配置为本地 Ollama：
 
@@ -79,6 +91,27 @@ PYTHONPATH=. python scripts/run_pipeline.py --config config/settings.example.yam
 - `api_base: http://localhost:11434/v1`
 
 运行时脚本会打印当前使用的 provider、model 和 api_base。只要看到 `provider: ollama`，就表示使用本地模型，不会调用 DeepSeek 云 API，也不会产生云端 API 费用。
+
+## 效果对比（示例）
+
+以下是推荐放在简历/仓库中的对比维度示例。数值请用你自己的实测结果替换。
+
+| 评估维度 | DeepSeek API (deepseek-chat) | DeepSeek-R1 (Ollama Local) |
+| :--- | :--- | :--- |
+| 法律术语准确度 | 高 | 高 |
+| 推理耗时 | 2.0s - 4.0s | 4.0s - 12.0s (RTX 4090) |
+| 单次调用费用 | 按 token 计费 | 0 元 API 费用 |
+| 隐私性 | 需传输到云端 | 数据留在本机/本地服务器 |
+
+建议在 `evaluation/results/` 保存对比结果（例如 CSV/Markdown 报告），并在此表中引用真实数据。
+
+## 数据隐私说明
+
+本项目支持通过 Ollama 本地化部署 DeepSeek 模型：
+
+- 法律敏感数据可不出本地服务器
+- 适合对隐私与合规要求更高的法律/专利场景
+- 在离线或弱网环境下仍可运行核心检索与生成流程
 
 ## Ollama 本地部署
 
