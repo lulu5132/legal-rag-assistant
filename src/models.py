@@ -34,12 +34,21 @@ def _resolve_provider_config(config: AppConfig) -> tuple[str, str]:
 
 def complete_text(config: AppConfig, prompt: str) -> str:
     api_key, api_base = _resolve_provider_config(config)
-    client = OpenAI(api_key=api_key, base_url=api_base)
+    provider = config.model.provider.lower().strip()
+    timeout = None if provider == "ollama" else config.model.request_timeout_sec
+
+    client = OpenAI(
+        api_key=api_key,
+        base_url=api_base,
+        timeout=timeout,
+        max_retries=config.model.max_retries,
+    )
 
     resp = client.chat.completions.create(
         model=config.model.llm_model,
         temperature=config.model.temperature,
         messages=[{"role": "user", "content": prompt}],
+        timeout=timeout,
     )
     content = resp.choices[0].message.content
     return content or ""
@@ -51,4 +60,6 @@ def build_llm(config: AppConfig) -> OpenAI:
     return OpenAI(
         api_key=api_key,
         base_url=api_base,
+        timeout=config.model.request_timeout_sec,
+        max_retries=config.model.max_retries,
     )

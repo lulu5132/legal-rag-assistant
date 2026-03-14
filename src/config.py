@@ -26,6 +26,8 @@ class ModelConfig(BaseModel):
     provider: str = "ollama"
     llm_model: str = "deepseek-r1:8b"
     temperature: float = 0.1
+    request_timeout_sec: int = 900
+    max_retries: int = 1
     embedding_type: str = "local"
     embedding_model: str = "models/bge-small-zh-v1.5"
     embedding_dim: int = 384

@@ -218,7 +218,7 @@ def answer_query(config: AppConfig, query: str, rebuild: bool = False) -> Tuple[
 
     try:
         structured = _generate_structured_answer(config, query, contexts)
-    except (ValueError, json.JSONDecodeError, ValidationError) as exc:
+    except (ValueError, json.JSONDecodeError, ValidationError, Exception) as exc:
         fallback = {
             "answer": f"结构化输出失败: {exc}",
             "key_points": [],

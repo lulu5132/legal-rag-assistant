@@ -76,6 +76,20 @@ PYTHONPATH=. python scripts/run_pipeline.py --config config/settings.example.yam
 
 后续查询无需重建索引（去掉 `--rebuild`）。
 
+### 本地快速模式（推荐先跑通）
+
+当本地模型推理较慢或你在调试流程时，建议先使用快速配置：
+
+```bash
+PYTHONPATH=. python scripts/run_pipeline.py --config config/settings.local.fast.yaml --query "请总结该专利草案的核心创新点"
+```
+
+该配置做了以下优化：
+
+- 降低检索候选数量（更快）
+- 关闭 JSON Schema 结构化输出（更稳）
+- 保持本地 Ollama 模式
+
 ## 模型切换
 
 在 `config/settings.example.yaml` 修改：
@@ -91,6 +105,16 @@ PYTHONPATH=. python scripts/run_pipeline.py --config config/settings.example.yam
 - `api_base: http://localhost:11434/v1`
 
 运行时脚本会打印当前使用的 provider、model 和 api_base。只要看到 `provider: ollama`，就表示使用本地模型，不会调用 DeepSeek 云 API，也不会产生云端 API 费用。
+
+## 超时与稳定性说明
+
+针对本地 Ollama 长推理场景，项目已做如下处理：
+
+- Ollama 请求不再使用固定短超时，避免长思考被提前中断
+- 提供 `request_timeout_sec` 与 `max_retries` 配置项
+- 结构化输出失败时会返回可解析的兜底 JSON，而不是直接崩溃退出
+
+如果你希望最高稳定性，优先使用 `config/settings.local.fast.yaml`；功能确认后再切回 `config/settings.example.yaml`。
 
 ## 效果对比（示例）
 
